@@ -28,7 +28,7 @@ jobs:
 
     - name: Run mlflow project
       run: |
-        mlflow run . -P dataset_path=Dataset-Final/train/ -P f1=64 -P u=64 -P lr=0.0001
+        mlflow run . --no-conda -P dataset_path=Dataset-Final/train/ -P f1=64 -P u=64 -P lr=0.0001
 
     - name: Get latest MLflow run_id
       run: |
@@ -39,7 +39,6 @@ jobs:
       env:
         GDRIVE_CREDENTIALS: ${{ secrets.GDRIVE_CREDENTIALS }}
       run: |
-        # Logika upload model (.h5) ke GDrive menggunakan RUN_ID
         python upload_script.py --run_id ${{ env.MLFLOW_RUN_ID }}
 
     - name: Build Docker Model
