@@ -1,0 +1,57 @@
+name: Mengerjakan-Submision-DL
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  train-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Run actions/checkout@v3
+      uses: actions/checkout@v3
+
+    - name: Set up Python 3.12.7
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12.7'
+
+    - name: Check Env
+      run: |
+        python --version
+        pip --version
+
+    - name: Install dependencies
+      run: |
+        pip install mlflow tensorflow streamlit gdown pillow numpy
+
+    - name: Run mlflow project
+      run: |
+        mlflow run . -P dataset_path=Dataset-Final/train/ -P f1=64 -P u=64 -P lr=0.0001
+
+    - name: Get latest MLflow run_id
+      run: |
+        RUN_ID=$(mlflow last-run --quiet)
+        echo "MLFLOW_RUN_ID=$RUN_ID" >> $GITHUB_ENV
+
+    - name: Upload to Google Drive
+      env:
+        GDRIVE_CREDENTIALS: ${{ secrets.GDRIVE_CREDENTIALS }}
+      run: |
+        # Logika upload model (.h5) ke GDrive menggunakan RUN_ID
+        python upload_script.py --run_id ${{ env.MLFLOW_RUN_ID }}
+
+    - name: Build Docker Model
+      run: |
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/animal-classifier:latest .
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Tag and Push Docker Image
+      run: |
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/animal-classifier:latest
