@@ -1,0 +1,15 @@
+python: "3.12.7" # Menyesuaikan log pada image_83f070.png
+build_dependencies:
+  - pip==26.0.1
+  - setuptools==69.5.1
+  - wheel==0.46.3
+dependencies:
+  - mlflow
+  - tensorflow
+  - keras-tuner
+  - streamlit
+  - gdown
+  - pillow
+  - numpy
+  - scikit-learn
+  - -r requirements.txt
