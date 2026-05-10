@@ -20,7 +20,7 @@ def train():
     # 2. Setup MLflow
     tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "sqlite:///mlflow.db")
     mlflow.set_tracking_uri(tracking_uri)
-    mlflow.set_experiment("Mengerjakan-Submision-DL")
+   
     with mlflow.start_run():
         # Log Parameters
         mlflow.log_param("dataset_path", args.dataset_path)
