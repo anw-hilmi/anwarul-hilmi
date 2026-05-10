@@ -51,7 +51,7 @@ jobs:
 
     - name: Build Docker Model
       run: |
-        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/animal-classifier:latest .
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/submision-dicoding:latest .
 
     - name: Log in to Docker Hub
       uses: docker/login-action@v3
