@@ -18,9 +18,9 @@ def train():
     args = parser.parse_args()
 
     # 2. Setup MLflow
-    mlflow.set_tracking_uri("http://127.0.0.1:5000")
-    mlflow.set_experiment("ZooVision_Experiment")
-    
+    tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "sqlite:///mlflow.db")
+    mlflow.set_tracking_uri(tracking_uri)
+    mlflow.set_experiment("Mengerjakan-Submision-DL")
     with mlflow.start_run():
         # Log Parameters
         mlflow.log_param("dataset_path", args.dataset_path)
