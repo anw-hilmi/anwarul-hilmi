@@ -61,4 +61,4 @@ jobs:
 
     - name: Tag and Push Docker Image
       run: |
-        docker push ${{ secrets.DOCKERHUB_USERNAME }}/animal-classifier:latest
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/submision-dicoding:latest
