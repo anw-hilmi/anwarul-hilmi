@@ -31,23 +31,23 @@ jobs:
     - name: Run mlflow project
       run: |
         export MLFLOW_TRACKING_URI=sqlite:///mlflow.db
-        mlflow run . --env-manager local -P dataset_path=Dataset-Final/train/ -P f1=64 -P u=64 -P lr=0.0001
+        mlflow run . --experiment-name "Mengerjakan-Submision-DL" --env-manager local \
+          -P dataset_path=Dataset-Final/train/ -P f1=64 -P u=64 -P lr=0.0001
 
     - name: Get latest MLflow run_id
       id: get_id
       run: |
         export MLFLOW_TRACKING_URI=sqlite:///mlflow.db
-        RUN_ID=$(mlflow runs list --experiment-name "Mengerjakan-Submision-DL" | head -n 3 | tail -n 1 | awk '{print $1}')
-        echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT 
+        RUN_ID=$(python -c "import mlflow; print(mlflow.search_runs(experiment_names=['Mengerjakan-Submision-DL'], order_by=['start_time DESC'], max_results=1)['run_id'][0])")
+        echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
         echo "MLFLOW_RUN_ID=$RUN_ID" >> $GITHUB_ENV
 
     - name: Upload to Google Drive
       env:
         GDRIVE_CREDENTIALS: ${{ secrets.GDRIVE_CREDENTIALS }}
-        CURRENT_RUN_ID: ${{ steps.get_id.outputs.run_id }} 
       run: |
         export MLFLOW_TRACKING_URI=sqlite:///mlflow.db
-        python upload_to_gdrive.py --run_id $CURRENT_RUN_ID
+        python upload_to_gdrive.py --run_id $MLFLOW_RUN_ID
 
     - name: Build Docker Model
       run: |
