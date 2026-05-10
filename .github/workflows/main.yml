@@ -47,7 +47,7 @@ jobs:
         CURRENT_RUN_ID: ${{ steps.get_id.outputs.run_id }} 
       run: |
         export MLFLOW_TRACKING_URI=sqlite:///mlflow.db
-        python upload_script.py --run_id $CURRENT_RUN_ID
+        python upload_to_gdrive.py --run_id $CURRENT_RUN_ID
 
     - name: Build Docker Model
       run: |
