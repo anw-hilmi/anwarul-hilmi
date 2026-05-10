@@ -26,7 +26,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install mlflow tensorflow streamlit gdown pillow numpy
+        pip install mlflow tensorflow streamlit gdown pillow numpy google-api-python-client google-auth-oauthlib google-auth-httplib2
 
     - name: Run mlflow project
       run: |
