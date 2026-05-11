@@ -1,16 +1,17 @@
 import os
 import json
 import argparse
+import shutil
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
-# Setup Argparse
+# 1. Setup Argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--run_id", type=str, required=True)
 args = parser.parse_args()
 
-# Load Credentials
+# 2. Load Credentials
 gdrive_creds_json = os.getenv('GDRIVE_CREDENTIALS')
 if not gdrive_creds_json:
     raise ValueError("GDRIVE_CREDENTIALS secret is not set!")
@@ -24,39 +25,18 @@ credentials = Credentials.from_service_account_info(
 service = build('drive', 'v3', credentials=credentials)
 SHARED_DRIVE_ID = os.getenv("GDRIVE_FOLDER_ID")
 
-def upload_directory(local_dir_path, parent_drive_id):
-    if not os.path.exists(local_dir_path): return
-    for item_name in os.listdir(local_dir_path):
-        item_path = os.path.join(local_dir_path, item_name)
-        if os.path.isdir(item_path):
-            folder_meta = {
-                'name': item_name,
-                'mimeType': 'application/vnd.google-apps.folder',
-                'parents': [parent_drive_id]
-            }
-            # Tambahkan supportsAllDrives=True
-            created_folder = service.files().create(
-                body=folder_meta, 
-                fields='id', 
-                supportsAllDrives=True
-            ).execute()
-            upload_directory(item_path, created_folder["id"])
-        else:
-            print(f"Uploading: {item_name}")
-            file_meta = {
-                'name': item_name, 
-                'parents': [parent_drive_id]
-            }
-            media = MediaFileUpload(item_path, resumable=True)
-            # CRITICAL: Gunakan fields='id' agar upload masuk ke folder tujuan, bukan kuota Service Account
-            service.files().create(
-                body=file_meta, 
-                media_body=media, 
-                fields='id',
-                supportsAllDrives=True
-            ).execute()
+# 3. Fungsi Upload File Tunggal
+def upload_file(file_path, name, parent_id):
+    file_meta = {'name': name, 'parents': [parent_id]}
+    media = MediaFileUpload(file_path, resumable=True)
+    return service.files().create(
+        body=file_meta, 
+        media_body=media, 
+        fields='id',
+        supportsAllDrives=True
+    ).execute()
 
-# Pencarian Path
+# 4. Pencarian Path & Eksekusi ZIP
 potential_sources = [
     f"./mlruns/1/{args.run_id}",
     f"./mlruns/0/{args.run_id}",
@@ -70,20 +50,18 @@ for ps in potential_sources:
         break
 
 if found_source:
-    print(f"=== Uploading from: {found_source} ===")
-    run_id_folder_meta = {
-        'name': args.run_id,
-        'mimeType': 'application/vnd.google-apps.folder',
-        'parents': [SHARED_DRIVE_ID]
-    }
-    run_id_folder = service.files().create(
-        body=run_id_folder_meta, 
-        fields='id', 
-        supportsAllDrives=True
-    ).execute()
-    upload_directory(found_source, run_id_folder["id"])
+    zip_name = f"{args.run_id}.zip"
+    # Membuat file ZIP dari folder source
+    shutil.make_archive(args.run_id, 'zip', found_source)
+    
+    print(f"=== Uploading ZIP: {zip_name} to Drive ===")
+    try:
+        upload_file(zip_name, zip_name, SHARED_DRIVE_ID)
+        print("=== Upload Sukses! ===")
+    except Exception as e:
+        print(f"Gagal upload: {e}")
 else:
-    print(f"Directory not found. Current structure:")
+    print(f"Source tidak ditemukan. Struktur folder:")
     os.system("ls -R")
 
-print("=== Upload Complete! ===")
+print("=== Selesai ===")
