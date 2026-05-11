@@ -5,11 +5,12 @@ from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
-# Tambahkan argparse untuk menerima RUN_ID dari YAML
+# Setup Argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--run_id", type=str, required=True)
 args = parser.parse_args()
 
+# Load Credentials
 gdrive_creds_json = os.getenv('GDRIVE_CREDENTIALS')
 if not gdrive_creds_json:
     raise ValueError("GDRIVE_CREDENTIALS secret is not set!")
@@ -33,19 +34,33 @@ def upload_directory(local_dir_path, parent_drive_id):
                 'mimeType': 'application/vnd.google-apps.folder',
                 'parents': [parent_drive_id]
             }
-            created_folder = service.files().create(body=folder_meta, fields='id', supportsAllDrives=True).execute()
+            # Tambahkan supportsAllDrives=True
+            created_folder = service.files().create(
+                body=folder_meta, 
+                fields='id', 
+                supportsAllDrives=True
+            ).execute()
             upload_directory(item_path, created_folder["id"])
         else:
-            file_meta = {'name': item_name, 'parents': [parent_drive_id]}
+            print(f"Uploading: {item_name}")
+            file_meta = {
+                'name': item_name, 
+                'parents': [parent_drive_id]
+            }
             media = MediaFileUpload(item_path, resumable=True)
-            service.files().create(body=file_meta, media_body=media, supportsAllDrives=True).execute()
+            # CRITICAL: Gunakan fields='id' agar upload masuk ke folder tujuan, bukan kuota Service Account
+            service.files().create(
+                body=file_meta, 
+                media_body=media, 
+                fields='id',
+                supportsAllDrives=True
+            ).execute()
 
-# --- BAGIAN PENCARIAN DINAMIS ---
-# Kita cari di mlruns/0/{run_id} atau mlartifacts/0/{run_id}
+# Pencarian Path
 potential_sources = [
+    f"./mlruns/1/{args.run_id}",
     f"./mlruns/0/{args.run_id}",
-    f"./mlartifacts/0/{args.run_id}",
-    f"./mlruns/1/{args.run_id}"
+    f"./mlartifacts/0/{args.run_id}"
 ]
 
 found_source = None
@@ -61,11 +76,14 @@ if found_source:
         'mimeType': 'application/vnd.google-apps.folder',
         'parents': [SHARED_DRIVE_ID]
     }
-    run_id_folder = service.files().create(body=run_id_folder_meta, fields='id', supportsAllDrives=True).execute()
+    run_id_folder = service.files().create(
+        body=run_id_folder_meta, 
+        fields='id', 
+        supportsAllDrives=True
+    ).execute()
     upload_directory(found_source, run_id_folder["id"])
 else:
-    print(f"Directory for Run ID {args.run_id} not found in {potential_sources}")
-    # List directory untuk debug
+    print(f"Directory not found. Current structure:")
     os.system("ls -R")
 
 print("=== Upload Complete! ===")
