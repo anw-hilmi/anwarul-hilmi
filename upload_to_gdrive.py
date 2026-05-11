@@ -1,11 +1,10 @@
 import os
 import json
-import argparse
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
-# 1. Load credential
+# 1. Load credential dari Environment Variable (GitHub Secrets)
 gdrive_creds_json = os.getenv('GDRIVE_CREDENTIALS')
 if not gdrive_creds_json:
     raise ValueError("GDRIVE_CREDENTIALS secret is not set!")
@@ -19,7 +18,7 @@ credentials = Credentials.from_service_account_info(
 # 2. Build Drive API
 service = build('drive', 'v3', credentials=credentials)
 
-# 3. Konfigurasi ID
+# 3. Ambil Folder ID dari Environment Variable
 SHARED_DRIVE_ID = os.getenv("GDRIVE_FOLDER_ID")
 
 def upload_directory(local_dir_path, parent_drive_id):
@@ -34,10 +33,13 @@ def upload_directory(local_dir_path, parent_drive_id):
             created_folder = service.files().create(
                 body=folder_meta,
                 fields='id',
-                supportsAllDrives=True # PENTING untuk Shared Drive
+                supportsAllDrives=True
             ).execute()
-            upload_directory(item_path, created_folder["id"])
+            new_folder_id = created_folder["id"]
+            print(f"Created folder: {item_name}")
+            upload_directory(item_path, new_folder_id)
         else:
+            print(f"Uploading file: {item_name}")
             file_meta = {
                 'name': item_name,
                 'parents': [parent_drive_id]
@@ -47,41 +49,29 @@ def upload_directory(local_dir_path, parent_drive_id):
                 body=file_meta,
                 media_body=media,
                 fields='id',
-                supportsAllDrives=True # PENTING agar tidak kena error kuota
+                supportsAllDrives=True
             ).execute()
 
-def main():
-    # Ambil Run ID dari argumen agar lebih akurat
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--run_id", type=str, required=True)
-    args = parser.parse_args()
-    
-    # MLflow dengan SQLite biasanya menyimpan di mlartifacts/0/ atau mlartifacts/1/
-    # Kita cek kedua kemungkinan folder tersebut
-    found_path = None
-    for exp_id in ["0", "1"]:
-        temp_path = f"./mlartifacts/{exp_id}/{args.run_id}"
-        if os.path.exists(temp_path):
-            found_path = temp_path
-            break
-    
-    if found_path:
-        print(f"=== Memulai Upload Artifact dari: {found_path} ===")
-        run_id_folder_meta = {
-            'name': f"Run_{args.run_id}",
-            'mimeType': 'application/vnd.google-apps.folder',
-            'parents': [SHARED_DRIVE_ID]
-        }
-        root_folder = service.files().create(
-            body=run_id_folder_meta,
-            fields='id',
-            supportsAllDrives=True
-        ).execute()
-        
-        upload_directory(found_path, root_folder["id"])
-        print("=== Upload Complete! ===")
-    else:
-        print(f"Error: Folder artifact untuk Run ID {args.run_id} tidak ditemukan!")
+# 4. Jalankan Upload
+local_mlruns_0 = "./mlruns/0"
 
-if __name__ == "__main__":
-    main()
+if os.path.exists(local_mlruns_0):
+    for run_id in os.listdir(local_mlruns_0):
+        run_id_local_path = os.path.join(local_mlruns_0, run_id)
+        if os.path.isdir(run_id_local_path):
+            run_id_folder_meta = {
+                'name': run_id,
+                'mimeType': 'application/vnd.google-apps.folder',
+                'parents': [SHARED_DRIVE_ID]
+            }
+            run_id_folder = service.files().create(
+                body=run_id_folder_meta,
+                fields='id',
+                supportsAllDrives=True
+            ).execute()
+            print(f"=== Uploading run_id: {run_id} ===")
+            upload_directory(run_id_local_path, run_id_folder["id"])
+else:
+    print(f"Directory {local_mlruns_0} not found. No files to upload.")
+
+print("=== Upload Complete! ===")
