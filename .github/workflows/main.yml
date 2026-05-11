@@ -39,7 +39,6 @@ jobs:
       run: |
         export MLFLOW_TRACKING_URI=sqlite:///mlflow.db
         RUN_ID=$(python -c "import mlflow; print(mlflow.search_runs(experiment_names=['Mengerjakan-Submision-DL'], order_by=['start_time DESC'], max_results=1)['run_id'][0])")
-        echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
         echo "MLFLOW_RUN_ID=$RUN_ID" >> $GITHUB_ENV
 
     - name: Upload to Google Drive
