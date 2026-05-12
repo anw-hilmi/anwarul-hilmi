@@ -24,15 +24,13 @@ jobs:
     
     - name: Run mlflow project
       run: |
-        # 1. Nyalakan server MLflow di background
-        mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./artifacts --host 127.0.0.1 --port 5000 &
+        # Menggunakan python -m untuk memanggil mlflow
+        python -m mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./artifacts --host 127.0.0.1 --port 5000 &
         
-        # 2. Tunggu sebentar agar server benar-benar siap
         sleep 5
         
-        # 3. Jalankan proyek (pastikan tracking URI mengarah ke localhost)
         export MLFLOW_TRACKING_URI=http://localhost:5000
-        mlflow run MLProject --experiment-name "Animal_Classification_Autolog" --env-manager local \
+        python -m mlflow run MLProject --experiment-name "Animal_Classification_Autolog" --env-manager local \
           -P train_path=Dataset-Final/train/ -P f1=64 -P u=64 -P lr=0.0001
           
     - name: Get latest MLflow run_id
