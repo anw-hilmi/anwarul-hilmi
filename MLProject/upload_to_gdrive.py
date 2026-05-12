@@ -1,6 +1,7 @@
 import os
 import json
 import argparse
+import glob
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
@@ -24,7 +25,7 @@ credentials = Credentials.from_service_account_info(
 service = build('drive', 'v3', credentials=credentials)
 SHARED_DRIVE_ID = os.getenv("GDRIVE_FOLDER_ID")
 
-# 3. Fungsi Upload File Tunggal
+# 3. Fungsi Upload
 def upload_file(file_path, name, parent_id):
     file_meta = {'name': name, 'parents': [parent_id]}
     media = MediaFileUpload(file_path, resumable=True)
@@ -35,31 +36,22 @@ def upload_file(file_path, name, parent_id):
         supportsAllDrives=True
     ).execute()
 
-# 4. Pencarian Path & Eksekusi Upload Model Langsung
-potential_sources = [
-    f"./mlruns/1/{args.run_id}/artifacts/model/data/model.keras",
-    f"./mlruns/0/{args.run_id}/artifacts/model/data/model.keras",
-    f"./mlartifacts/0/{args.run_id}/artifacts/model/data/model.keras"
-]
+# 4. Pencarian Path Otomatis
+# Mencari model.keras secara mendalam di folder artifacts
+found_files = glob.glob(f"./artifacts/**/model.keras", recursive=True)
 
-found_file = None
-for ps in potential_sources:
-    if os.path.exists(ps):
-        found_file = ps
-        break
-
-if found_file:
-    # Nama file di Drive akan tetap model.keras agar sesuai dengan app.py
+if found_files:
+    found_file = found_files[0]
     file_display_name = "model.keras"
     
-    print(f"=== Uploading File: {found_file} to Drive ===")
+    print(f"=== File Ditemukan: {found_file} ===")
     try:
         response = upload_file(found_file, file_display_name, SHARED_DRIVE_ID)
         print(f"=== Upload Sukses! File ID: {response.get('id')} ===")
     except Exception as e:
         print(f"Gagal upload: {e}")
 else:
-    print(f"File model.keras tidak ditemukan di path artifacts. Struktur folder:")
+    print(f"File model.keras tidak ditemukan. Isi folder saat ini:")
     os.system("ls -R")
 
 print("=== Selesai ===")
