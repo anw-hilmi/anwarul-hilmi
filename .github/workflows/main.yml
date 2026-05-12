@@ -25,6 +25,8 @@ jobs:
 
     - name: Run mlflow project
       run: |
+        # Kita tambahkan perintah export di sini untuk memastikan proses saat ini menggunakannya
+        export MLFLOW_TRACKING_URI=sqlite:///mlflow.db
         mlflow run MLProject --experiment-name "Mengerjakan-Submision-DL" --env-manager local \
           -P train_path=Dataset-Final/train/ -P f1=64 -P u=64 -P lr=0.0001
 
