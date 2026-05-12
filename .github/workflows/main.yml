@@ -68,5 +68,8 @@ jobs:
 
     - name: Build and Push Docker Image
       run: |
-        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/submision-dicoding:latest -f MLProject/Dockerfile .
-        docker push ${{ secrets.DOCKERHUB_USERNAME }}/submision-dicoding:latestlatest
+        # Membangun image dengan konteks folder MLProject agar COPY bekerja benar
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/submision-dicoding:latest ./MLProject
+        
+        # Melakukan push dengan tag yang benar
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/submision-dicoding:latest
