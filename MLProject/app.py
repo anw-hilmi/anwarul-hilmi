@@ -6,7 +6,7 @@ import numpy as np
 from PIL import Image
 
 # Konfigurasi GDrive (Gunakan Folder ID tempat model disimpan)
-FOLDER_ID = "1TY5tzm4Ts9Yx3iY9uuV5Vh0rE5aUxaRE"
+FOLDER_ID = "0ALxmuj1YL2DtUk9PVA" 
 MODEL_PATH = "model.keras"
 
 @st.cache_resource

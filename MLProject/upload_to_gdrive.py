@@ -1,7 +1,6 @@
 import os
 import json
 import argparse
-import shutil
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
@@ -12,7 +11,7 @@ parser.add_argument("--run_id", type=str, required=True)
 args = parser.parse_args()
 
 # 2. Load Credentials
-gdrive_creds_json = os.getenv('GDRIVE_CREDENTIALS')
+gdrive_creds_json = os.getenv('GDRIVE_CREDENTIALS') 
 if not gdrive_creds_json:
     raise ValueError("GDRIVE_CREDENTIALS secret is not set!")
 
@@ -36,32 +35,31 @@ def upload_file(file_path, name, parent_id):
         supportsAllDrives=True
     ).execute()
 
-# 4. Pencarian Path & Eksekusi ZIP
+# 4. Pencarian Path & Eksekusi Upload Model Langsung
 potential_sources = [
-    f"./mlruns/1/{args.run_id}",
-    f"./mlruns/0/{args.run_id}",
-    f"./mlartifacts/0/{args.run_id}"
+    f"./mlruns/1/{args.run_id}/artifacts/model/data/model.keras",
+    f"./mlruns/0/{args.run_id}/artifacts/model/data/model.keras",
+    f"./mlartifacts/0/{args.run_id}/artifacts/model/data/model.keras"
 ]
 
-found_source = None
+found_file = None
 for ps in potential_sources:
     if os.path.exists(ps):
-        found_source = ps
+        found_file = ps
         break
 
-if found_source:
-    zip_name = f"{args.run_id}.zip"
-    # Membuat file ZIP dari folder source
-    shutil.make_archive(args.run_id, 'zip', found_source)
+if found_file:
+    # Nama file di Drive akan tetap model.keras agar sesuai dengan app.py
+    file_display_name = "model.keras"
     
-    print(f"=== Uploading ZIP: {zip_name} to Drive ===")
+    print(f"=== Uploading File: {found_file} to Drive ===")
     try:
-        upload_file(zip_name, zip_name, SHARED_DRIVE_ID)
-        print("=== Upload Sukses! ===")
+        response = upload_file(found_file, file_display_name, SHARED_DRIVE_ID)
+        print(f"=== Upload Sukses! File ID: {response.get('id')} ===")
     except Exception as e:
         print(f"Gagal upload: {e}")
 else:
-    print(f"Source tidak ditemukan. Struktur folder:")
+    print(f"File model.keras tidak ditemukan di path artifacts. Struktur folder:")
     os.system("ls -R")
 
 print("=== Selesai ===")
