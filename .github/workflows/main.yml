@@ -24,15 +24,20 @@ jobs:
     
     - name: Run mlflow project
       run: |
-        # Menggunakan python -m untuk memanggil mlflow
+        # 1. Re-install/Verify mlflow di langkah yang sama
+        pip install mlflow tensorflow
+
+        # 2. Jalankan server MLflow di background menggunakan python -m
         python -m mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./artifacts --host 127.0.0.1 --port 5000 &
         
-        sleep 5
+        # 3. Tunggu server siap
+        sleep 10
         
+        # 4. Jalankan project
         export MLFLOW_TRACKING_URI=http://localhost:5000
         python -m mlflow run MLProject --experiment-name "Animal_Classification_Autolog" --env-manager local \
           -P train_path=Dataset-Final/train/ -P f1=64 -P u=64 -P lr=0.0001
-          
+    
     - name: Get latest MLflow run_id
       id: get_id
       run: |
