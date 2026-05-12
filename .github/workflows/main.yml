@@ -31,7 +31,7 @@ jobs:
     - name: Run mlflow project
       run: |
         export MLFLOW_TRACKING_URI=sqlite:///mlflow.db
-        mlflow run . --experiment-name "Mengerjakan-Submision-DL" --env-manager local \
+        mlflow run MLProject --experiment-name "Mengerjakan-Submision-DL" --env-manager local \
           -P train_path=Dataset-Final/train/ -P f1=64 -P u=64 -P lr=0.0001
 
     - name: Get latest MLflow run_id
