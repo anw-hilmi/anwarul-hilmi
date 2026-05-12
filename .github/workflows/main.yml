@@ -21,6 +21,8 @@ jobs:
 
     - name: Install dependencies
       run: |
+        # Tambahkan tensorboard agar autolog tidak error
+        pip install mlflow tensorflow tensorboard streamlit gdown pillow numpy google-api-python-client google-auth-oauthlib google-auth-httplib2
     
     - name: Run mlflow project
       run: |
