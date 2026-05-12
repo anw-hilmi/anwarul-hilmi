@@ -1,4 +1,4 @@
-name: Mengerjakan-Submision-DL
+name: Animal_Classification_Autolog
 
 conda_env: conda.yaml
 
