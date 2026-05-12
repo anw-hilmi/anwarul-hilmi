@@ -43,9 +43,14 @@ jobs:
     - name: Get latest MLflow run_id
       id: get_id
       run: |
-        # Python akan otomatis membaca env MLFLOW_TRACKING_URI dari job level
-        RUN_ID=$(python -c "import mlflow; print(mlflow.search_runs(experiment_names=['Mengerjakan-Submision-DL'], order_by=['start_time DESC'], max_results=1)['run_id'][0])")
+        # Pastikan mengarah ke server yang sedang berjalan
+        export MLFLOW_TRACKING_URI=http://localhost:5000
+        
+        # Ambil run_id dari eksperimen yang benar
+        RUN_ID=$(python -c "import mlflow; runs = mlflow.search_runs(experiment_names=['Animal_Classification_Autolog'], order_by=['start_time DESC'], max_results=1); print(runs['run_id'][0] if not runs.empty else 'NONE')")
+        
         echo "MLFLOW_RUN_ID=$RUN_ID" >> $GITHUB_ENV
+        echo "Berhasil mendapatkan RUN_ID: $RUN_ID"
 
     - name: Upload to Google Drive
       env:
